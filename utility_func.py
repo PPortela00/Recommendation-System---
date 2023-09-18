@@ -1,4 +1,5 @@
 import pandas as pd
+import surprise
 import matplotlib.pyplot as plt
 
 
@@ -58,3 +59,63 @@ def HistogramEDA2_2(merged_df, city):
     plt.xlabel('Stars')
     plt.ylabel('Number of reviews')
     plt.show()
+
+
+def ConvertStringKeyToIntegerKey(df, col):
+    # Get unique strings from the column
+    unique_strings = df[col].unique()
+
+    # Create a mapping dictionary to assign unique integer keys
+    string_to_int_mapping = {string: index for index, string in enumerate(unique_strings)}
+
+    # Add a new column with integer keys
+    df[col] = df[col].map(string_to_int_mapping)
+
+    return df
+
+
+def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
+    # Aggregation of data, with relevant columns, from the business and reviews datasets
+    business_cols = ['business_id', 'city', 'is_open']
+    reviews_cols = ['review_id', 'user_id', 'business_id', 'stars']
+    users_cols = ['user_id']
+
+    df = pd.merge(reviews_df[reviews_cols], business_df[(business_df['is_open'] == 1) & (business_df['city'] == city)][business_cols], 
+                  left_on='business_id', right_on='business_id', how='inner')
+    df = pd.merge(df, users_df[users_cols], left_on='user_id', right_on='user_id', how='left')
+    df = df[['user_id', 'business_id', 'stars']]
+
+    df = ConvertStringKeyToIntegerKey(df, 'user_id')
+    df = ConvertStringKeyToIntegerKey(df, 'business_id')
+
+    df = df.drop_duplicates(subset=['user_id', 'business_id'], keep="first", inplace=False)
+    
+    return df
+
+
+def PrepareDataSurprise(df):
+    # Create a Surprise Reader specifying the rating scale
+    reader = surprise.Reader(rating_scale=(df.stars.min(), df.stars.max()))
+    # Load the pandas DataFrame into a Surprise Dataset
+    data = surprise.Dataset.load_from_df(df[['user_id', 'business_id', 'stars']], reader)
+
+    trainset, testset = surprise.model_selection.train_test_split(data, test_size=0.1)
+
+    return trainset, testset
+
+
+# Define evaluation function
+def evaluate_algorithm(algo, trainset, testset):
+    algo.fit(trainset)
+    predictions = algo.test(testset)
+    
+    # Compute and return RMSE
+    rmse = surprise.accuracy.rmse(predictions)
+    return rmse
+
+
+def UserBasedCollaborativeFiltering(data_train, data_test):
+    ubcf_algo = surprise.KNNBasic(sim_options={'user_based': True})
+    ubcf_rmse = evaluate_algorithm(ubcf_algo, data_train, data_test)
+
+    return ubcf_algo, ubcf_rmse
