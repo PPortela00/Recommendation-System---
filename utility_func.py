@@ -119,3 +119,17 @@ def UserBasedCollaborativeFiltering(data_train, data_test):
     ubcf_rmse = evaluate_algorithm(ubcf_algo, data_train, data_test)
 
     return ubcf_algo, ubcf_rmse
+
+
+def ItemBasedCollaborativeFiltering(data_train, data_test):
+    ibcf_algo = surprise.KNNBasic(sim_options={'user_based': False})
+    ibcf_rmse = evaluate_algorithm(ibcf_algo, data_train, data_test)
+
+    return ibcf_algo, ibcf_rmse
+
+
+def SingularValueDecomposition(data_train, data_test):
+    svd_algo = surprise.SVD()
+    svd_rmse = evaluate_algorithm(svd_algo, data_train, data_test)
+
+    return svd_algo, svd_rmse
