@@ -93,11 +93,11 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
     return df
 
 
-def PrepareDataSurprise(df):
+def PrepareDataSurprise(df, sample_size=100000):
     # Create a Surprise Reader specifying the rating scale
     reader = surprise.Reader(rating_scale=(df.stars.min(), df.stars.max()))
     # Load the pandas DataFrame into a Surprise Dataset
-    data = surprise.Dataset.load_from_df(df[['user_id', 'business_id', 'stars']], reader)
+    data = surprise.Dataset.load_from_df(df[['user_id', 'business_id', 'stars']].sample(sample_size), reader)
 
     trainset, testset = surprise.model_selection.train_test_split(data, test_size=0.1)
 
