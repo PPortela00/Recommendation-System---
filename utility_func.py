@@ -2,6 +2,22 @@ import pandas as pd
 import surprise
 import matplotlib.pyplot as plt
 
+from IPython.display import display
+
+
+def YelpDatasets(business_df, reviews_df, users_df):
+    # Display information and the first 5 rows of the 'business' DataFrame
+    print("Business DataFrame's head:")
+    display(business_df.head())
+
+    # Display information and the first 5 rows of the 'reviews' DataFrame
+    print("\nReviews DataFrame's head:")
+    display(reviews_df.head())
+
+    # Display information and the first 5 rows of the 'users' DataFrame
+    print("\nUsers DataFrame's head:")
+    display(users_df.head())
+
 
 def Top5VarianceCities(merged_df):
     # Compute the variance of ratings for each city
@@ -93,7 +109,7 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
     return df
 
 
-def PrepareDataSurprise(df, sample_size=100000):
+def PrepareDataSurprise(df, sample_size=326439):
     # Create a Surprise Reader specifying the rating scale
     reader = surprise.Reader(rating_scale=(df.stars.min(), df.stars.max()))
     # Load the pandas DataFrame into a Surprise Dataset
