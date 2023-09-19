@@ -127,25 +127,60 @@ def evaluate_algorithm(algo, trainset, testset):
     
     # Compute and return RMSE
     rmse = surprise.accuracy.rmse(predictions)
-    return rmse
+    return rmse, predictions
 
 
 def UserBasedCollaborativeFiltering(data_train, data_test):
     ubcf_algo = surprise.KNNBasic(sim_options={'user_based': True})
-    ubcf_rmse = evaluate_algorithm(ubcf_algo, data_train, data_test)
+    ubcf_rmse, predictions = evaluate_algorithm(ubcf_algo, data_train, data_test)
 
-    return ubcf_algo, ubcf_rmse
+    return ubcf_algo, ubcf_rmse, predictions
 
 
 def ItemBasedCollaborativeFiltering(data_train, data_test):
     ibcf_algo = surprise.KNNBasic(sim_options={'user_based': False})
-    ibcf_rmse = evaluate_algorithm(ibcf_algo, data_train, data_test)
+    ibcf_rmse, predictions = evaluate_algorithm(ibcf_algo, data_train, data_test)
 
-    return ibcf_algo, ibcf_rmse
+    return ibcf_algo, ibcf_rmse, predictions
 
 
-def SingularValueDecomposition(data_train, data_test):
-    svd_algo = surprise.SVD()
-    svd_rmse = evaluate_algorithm(svd_algo, data_train, data_test)
+def SingularValueDecomposition(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005):
+    svd_algo = surprise.SVD(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr)
+    svd_rmse, predictions = evaluate_algorithm(svd_algo, data_train, data_test)
 
-    return svd_algo, svd_rmse
+    return svd_algo, svd_rmse, predictions
+
+
+def PredictionsRS(trainset, predictions, n):
+    def get_Iu(uid):
+        """ return the number of items rated by given user
+        args: 
+        uid: the id of the user
+        returns: 
+        the number of items rated by the user
+        """
+        try:
+            return len(trainset.ur[trainset.to_inner_uid(uid)])
+        except ValueError: # user was not part of the trainset
+            return 0
+        
+    def get_Ui(iid):
+        """ return number of users that have rated given item
+        args:
+        iid: the raw id of the item
+        returns:
+        the number of users that have rated the item.
+        """
+        try: 
+            return len(trainset.ir[trainset.to_inner_iid(iid)])
+        except ValueError:
+            return 0
+        
+    df = pd.DataFrame(predictions, columns=['uid', 'iid', 'r_ui', 'est', 'details'])
+    df['user_n_rated'] = df.uid.apply(get_Iu)
+    df['item_n_rated'] = df.iid.apply(get_Ui)
+    df['err'] = abs(df.est - df.r_ui)
+    best_predictions = df.sort_values(by='err')[:n]
+    worst_predictions = df.sort_values(by='err')[-n:]
+
+    return df, best_predictions, worst_predictions
