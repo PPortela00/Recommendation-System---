@@ -115,7 +115,7 @@ def PrepareDataSurprise(df, sample_size=326439):
     # Load the pandas DataFrame into a Surprise Dataset
     data = surprise.Dataset.load_from_df(df[['user_id', 'business_id', 'stars']].sample(sample_size), reader)
 
-    trainset, testset = surprise.model_selection.train_test_split(data, test_size=0.1)
+    trainset, testset = surprise.model_selection.train_test_split(data, test_size=0.01)
 
     return trainset, testset
 
