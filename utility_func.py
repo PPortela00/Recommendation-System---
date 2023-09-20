@@ -253,3 +253,20 @@ def PredictionsRS(trainset, predictions, n):
     worst_predictions = df.sort_values(by='err')[-n:]
 
     return df, best_predictions, worst_predictions
+
+
+# Recommend top N items for a user using a recommender model
+def recommend_top_n(algo, trainset, user_id, n=10):
+    user_ratings = trainset.ur[user_id]
+    items = [item_id for (item_id, _) in user_ratings]
+    
+    item_scores = {}
+    for item_id in trainset.all_items():
+        if item_id not in items:
+            prediction = algo.predict(user_id, item_id, verbose=False)
+            item_scores[item_id] = prediction.est
+    
+    top_items = sorted(item_scores, key=item_scores.get, reverse=True)[:n]
+
+    #from raw_id to actual_id
+    return [trainset.to_raw_iid(i) for i in top_items]
