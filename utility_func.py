@@ -1,6 +1,7 @@
 import pandas as pd
 import surprise
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from IPython.display import display
 
@@ -77,6 +78,59 @@ def HistogramEDA2_2(merged_df, city):
     plt.show()
 
 
+def OpenClosedTucson(business_df):
+    # 2. Count of Open and Closed Businesses in Tucson:
+    df_business_tucson = business_df[business_df['city'] == 'Tucson']
+
+    # Count the number of open and closed businesses in Tucson
+    business_open_closed = df_business_tucson['is_open'].value_counts()
+
+    # Create a bar plot
+    plt.figure(figsize = (8, 6))
+    sns.barplot(x = business_open_closed.index, y = business_open_closed.values, palette = 'Set2')
+    plt.xticks([0, 1], ['Closed', 'Open'])
+    plt.title('Count of Open and Closed Businesses in Tucson')
+    plt.xlabel('Status')
+    plt.ylabel('Count')
+    plt.show()
+
+    return df_business_tucson
+
+
+def Top10CommomCategoriesTucson(business_tucson_df):
+    plt.figure(figsize = (12, 8))
+    top_categories = business_tucson_df['categories'].str.split(',').explode().str.strip().value_counts()[:10]
+    sns.barplot(y = top_categories.index, x = top_categories.values)
+    plt.title('Top 10 Business Categories in Tucson')
+    plt.xlabel('Number of Businesses')
+    plt.ylabel('Category')
+    plt.show()
+
+
+def UserRegistrationReviewsTucson(users_df, reviews_tucson_df):
+    # 4. Analysis of User Registration Dates related to reviews in Tucson:
+    df_users_tucson = users_df[users_df['user_id'].isin(reviews_tucson_df['user_id'])]
+    df_users_tucson['yelping_since'] = pd.to_datetime(df_users_tucson['yelping_since'])
+    df_users_tucson['yelping_since_year'] = df_users_tucson['yelping_since'].dt.year
+
+    plt.figure(figsize = (10, 6))
+    sns.histplot(data = df_users_tucson, x = 'yelping_since_year', bins = 20, kde = True)
+    plt.title('Distribution of User Registration Dates in Tucson (Related to Reviews)')
+    plt.xlabel('Registration Year')
+    plt.ylabel('Count')
+    plt.show()
+
+
+def CorrelationMatrix(business_tucson_df):
+    # 5. Correlation between Features (only for numeric variables) in the "business" table:
+    correlation_matrix_business = business_tucson_df.corr()
+
+    plt.figure(figsize = (12, 8))
+    sns.heatmap(correlation_matrix_business, annot = True, cmap = 'coolwarm')
+    plt.title('Correlation Matrix of Business Features in Tucson')
+    plt.show()
+
+
 def ConvertStringKeyToIntegerKey(df, col):
     # Get unique strings from the column
     unique_strings = df[col].unique()
@@ -128,6 +182,14 @@ def evaluate_algorithm(algo, trainset, testset):
     # Compute and return RMSE
     rmse = surprise.accuracy.rmse(predictions)
     return rmse, predictions
+
+
+def RandomRecommender(data_train, data_test):
+    # Random Recommender
+    random_algo = surprise.NormalPredictor()
+    random_rmse, predictions = evaluate_algorithm(random_algo, data_train, data_test)
+
+    return random_algo, random_rmse, predictions
 
 
 def UserBasedCollaborativeFiltering(data_train, data_test):
