@@ -36,7 +36,7 @@ def Top5VarianceCities(merged_df):
     result_df = result_df.sort_values(by='star_var', ascending=False)
 
     # Choosing the cities with higher variance and with more than 300k reviews
-    result_df_limit5 = result_df[result_df['count'] >= 300000].sort_values(by='star_var', ascending=False).head(5)
+    result_df_limit = result_df[result_df['count'] >= 300000].sort_values(by='star_var', ascending=False).head(5)
 
     return result_df_limit5
 
