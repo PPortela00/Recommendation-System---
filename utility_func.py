@@ -2,7 +2,6 @@ import pandas as pd
 import surprise
 import matplotlib.pyplot as plt
 
-from sklearn.manifold import TSNE
 from IPython.display import display
 
 
@@ -185,10 +184,3 @@ def PredictionsRS(trainset, predictions, n):
     worst_predictions = df.sort_values(by='err')[-n:]
 
     return df, best_predictions, worst_predictions
-
-
-def perform_tnse (svd_matrix):
-    tsne = TSNE(n_components=2, n_iter=500, verbose=3, random_state=1)
-    res_embedding = tsne.fit_transform(svd_matrix)
-    projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
-    return projection
