@@ -3,6 +3,7 @@ import surprise
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.manifold import TSNE
 from IPython.display import display
 
 
@@ -263,3 +264,10 @@ def recommend_top_n(algo, trainset, user_id, n=10):
 
     #from raw_id to actual_id
     return [trainset.to_raw_iid(i) for i in top_items], item_scores
+
+
+def perform_tsne (svd_matrix):
+    tsne = TSNE(n_components=2, n_iter=500, verbose=3, random_state=1)
+    res_embedding = tsne.fit_transform(svd_matrix)
+    projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
+    return projection
