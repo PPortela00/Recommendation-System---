@@ -144,11 +144,18 @@ def ItemBasedCollaborativeFiltering(data_train, data_test):
     return ibcf_algo, ibcf_rmse, predictions
 
 
-def SingularValueDecomposition(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005):
-    svd_algo = surprise.SVD(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr)
+def SingularValueDecomposition(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005, reg_all=0.02):
+    svd_algo = surprise.SVD(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr, reg_all=reg_all)
     svd_rmse, predictions = evaluate_algorithm(svd_algo, data_train, data_test)
 
     return svd_algo, svd_rmse, predictions
+
+
+def SingularValueDecompositionPP(data_train, data_test, n_factors=20, n_epochs=20, lr=0.007, reg_all=0.02, cache_ratings=False):
+    svdpp_algo = surprise.SVDpp(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr, reg_all=reg_all, cache_ratings=cache_ratings)
+    svdpp_rmse, predictions = evaluate_algorithm(svdpp_algo, data_train, data_test)
+
+    return svdpp_algo, svdpp_rmse, predictions
 
 
 def PredictionsRS(trainset, predictions, n):
