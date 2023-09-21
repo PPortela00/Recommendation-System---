@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import surprise
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -67,6 +68,21 @@ def DescribeCities(merged_df, cities):
     return city_describe
 
 
+def ScatterPlotEDA(top5_var_cities_df):
+
+    plt.figure(figsize=(10, 6))
+    colors = np.arange(len(top5_var_cities_df))
+    plt.scatter(top5_var_cities_df['city'], top5_var_cities_df['star_var'], c=colors, cmap='viridis', s=100)
+    plt.xlabel('City')
+    plt.ylabel('Review Variance')
+    plt.title('Top 5 Cities with Highest Review Variance (with more than 300k reviews)')
+    plt.xticks(rotation=45)
+    colorbar = plt.colorbar()
+    colorbar.set_label('Cities')
+    plt.tight_layout()
+    plt.show()
+
+
 # This function plots an histogram of the review's ratings
 def HistogramEDA2_2(merged_df, city):
 
@@ -123,6 +139,7 @@ def UserRegistrationReviewsTucson(users_df, reviews_tucson_df):
 
 def CorrelationMatrix(business_tucson_df):
     # 5. Correlation between Features (only for numeric variables) in the "business" table:
+    business_tucson_df.drop(columns=['is_open'], inplace=True)
     correlation_matrix_business = business_tucson_df.corr()
 
     plt.figure(figsize = (12, 8))
@@ -206,11 +223,18 @@ def ItemBasedCollaborativeFiltering(data_train, data_test):
     return ibcf_algo, ibcf_rmse, predictions
 
 
-def SingularValueDecomposition(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005):
-    svd_algo = surprise.SVD(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr)
+def SingularValueDecomposition(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005, reg_all=0.02):
+    svd_algo = surprise.SVD(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr, reg_all=reg_all)
     svd_rmse, predictions = evaluate_algorithm(svd_algo, data_train, data_test)
 
     return svd_algo, svd_rmse, predictions
+
+
+def SingularValueDecompositionPP(data_train, data_test, n_factors=100, n_epochs=20, lr=0.005, reg_all=0.02, cache_ratings = False):
+    svdpp_algo = surprise.SVDpp(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr, reg_all=reg_all, cache_ratings=cache_ratings)
+    svdpp_rmse, predictions = evaluate_algorithm(svdpp_algo, data_train, data_test)
+
+    return svdpp_algo, svdpp_rmse, predictions
 
 
 def PredictionsRS(trainset, predictions, n):
@@ -265,8 +289,8 @@ def recommend_top_n(algo, trainset, user_id, n=10):
     return [trainset.to_raw_iid(i) for i in top_items], item_scores
 
 
-def perform_tsne (svd_matrix):
-    tsne = TSNE(n_components=2, n_iter=500, verbose=3, random_state=1)
+def perform_tsne(svd_matrix, n_componets, n_iter):
+    tsne = TSNE(n_components=n_componets, n_iter=n_iter, verbose=3, random_state=1)
     res_embedding = tsne.fit_transform(svd_matrix)
     projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
     return projection
