@@ -148,6 +148,25 @@ def CorrelationMatrix(business_tucson_df):
     plt.show()
 
 
+def NumReviewsBusiness(df_reviews):
+
+    business_counts = df_reviews['business_id'].value_counts()
+
+    plt.figure(figsize=(8, 6))
+    business_counts.hist(bins=500)
+    plt.xlabel('Number of reviews')
+    plt.ylabel('Frequency')
+    plt.title('Business Frequency Histogram')
+
+    # Set the x-axis limits to zoom in
+    plt.xlim(left=0, right=100)  # Adjust the range as needed
+
+    # Show the histogram
+    plt.show()
+
+    return business_counts
+
+
 def ConvertStringKeyToIntegerKey(df, col):
     # Get unique strings from the column
     unique_strings = df[col].unique()
@@ -161,7 +180,7 @@ def ConvertStringKeyToIntegerKey(df, col):
     return df
 
 
-def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
+def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filter):
     # Aggregation of data, with relevant columns, from the business and reviews datasets
     business_cols = ['business_id', 'city', 'is_open']
     reviews_cols = ['review_id', 'user_id', 'business_id', 'stars']
@@ -173,8 +192,10 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
     df = pd.merge(df, users_df[users_cols], left_on='user_id', right_on='user_id', how='left')
     df = df[['user_id', 'business_id', 'stars']]
 
-    #df = ConvertStringKeyToIntegerKey(df, 'user_id')
-    #df = ConvertStringKeyToIntegerKey(df, 'business_id')
+    df = df[~df['business_id'].isin(business_to_filter)]
+
+    df = ConvertStringKeyToIntegerKey(df, 'user_id')
+    df = ConvertStringKeyToIntegerKey(df, 'business_id')
 
     # Remove businesses with a number of reviews equal to or less than 1
     business_review_counts = df['business_id'].value_counts()
@@ -274,27 +295,27 @@ def PredictionsRS(trainset, predictions, n):
     df['user_n_rated'] = df.uid.apply(get_Iu)
     df['item_n_rated'] = df.iid.apply(get_Ui)
     df['err'] = abs(df.est - df.r_ui)
-    best_predictions = df.sort_values(by='err')[:n]
-    worst_predictions = df.sort_values(by='err')[-n:]
+    best_predictions = df.sort_values(by = 'err')[:n]
+    worst_predictions = df.sort_values(by = 'err')[-n:]
 
     return df, best_predictions, worst_predictions
 
 
 # Recommend top N items for a user using a recommender model
-def recommend_top_n(algo, trainset, user_id, n=10):
-    user_ratings = trainset.ur[trainset.to_inner_uid(user_id)]
+def recommend_top_n(algo, trainset, raw_user_id, n=10):
+    user_ratings = trainset.ur[trainset.to_inner_uid(raw_user_id)]
     items = [item_id for (item_id, _) in user_ratings]
     
     item_scores = {}
     for item_id in trainset.all_items():
         if item_id not in items:
-            prediction = algo.predict(user_id, trainset.to_raw_iid(item_id), verbose=False)
-            item_scores[item_id] = prediction.est
+            raw_item_id = trainset.to_raw_iid(item_id)
+            prediction = algo.predict(raw_user_id, raw_item_id, verbose=False)
+            item_scores[raw_item_id] = prediction.est
     
-    top_items = sorted(item_scores, key = item_scores.get, reverse=True)[:n]
+    top_items = sorted(item_scores, key = item_scores.get, reverse = True)[:n]
 
-    #from raw_id to actual_id
-    return [trainset.to_raw_iid(i) for i in top_items], item_scores
+    return top_items, item_scores
 
 
 def perform_tsne(svd_matrix, n_componets, n_iter):
