@@ -167,6 +167,7 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
     reviews_cols = ['review_id', 'user_id', 'business_id', 'stars']
     users_cols = ['user_id']
 
+    # Merge the relevant dataframes
     df = pd.merge(reviews_df[reviews_cols], business_df[(business_df['is_open'] == 1) & (business_df['city'] == city)][business_cols], 
                   left_on='business_id', right_on='business_id', how='inner')
     df = pd.merge(df, users_df[users_cols], left_on='user_id', right_on='user_id', how='left')
@@ -175,9 +176,16 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city):
     #df = ConvertStringKeyToIntegerKey(df, 'user_id')
     #df = ConvertStringKeyToIntegerKey(df, 'business_id')
 
+    # Remove businesses with a number of reviews equal to or less than 1
+    business_review_counts = df['business_id'].value_counts()
+    businesses_to_keep = business_review_counts[business_review_counts > 1].index
+    df = df[df['business_id'].isin(businesses_to_keep)]
+
+    # Remove duplicate entries
     df = df.drop_duplicates(subset=['user_id', 'business_id'], keep="first", inplace=False)
     
     return df
+
 
 
 def PrepareDataSurprise(df, sample_size=326439):
