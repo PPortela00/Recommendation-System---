@@ -373,6 +373,7 @@ def BusinessesReviewedCommom(user1, user2, df):
 
     return value
 
+
 """This function checks if user1 and user2 have given the same review rating for any businesses in the DataFrame df. 
 It does this by comparing the star ratings given by these users for the businesses they have reviewed."""
 def SameReviewRating(user1, user2, df):
@@ -393,3 +394,35 @@ def Weight(user1_id, user2_id, users_df, df):
     friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
 
     return EliteUsers(user_1) + (user_1['fans'] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, df)
+
+"""An alternative to calculating a user's 'elite' status could be to consider the duration of elite status.
+Instead of counting the number of comma-separated elements in the 'elite' column, you could calculate the number of years the user has held elite status."""
+def EliteUsers_v1(user1):
+    elite_status = user1['elite'].apply(lambda x: x.split(','))
+    elite_years = [int(year.strip()) for x in elite_status for year in x if year.strip().isdigit()]
+    return len(elite_years)
+
+"""An alternative way of verifying the existence of direct friendships between users could be to calculate the total number of friends in common between two users. 
+This would take into account the strength of the connection between them based on how many friends they share in common."""
+# Not working
+def Friends_v1(user1, user2):
+    friends_user1 = set(user1['friends'].split(', '))
+    friends_user2 = set(user2['friends'].split(', '))
+    common_friends = friends_user1.intersection(friends_user2)
+    return len(common_friends)
+
+def BusinessesReviewedCommom_v1(user1, user2, df):
+    df_user1 = df[(df['user_id'] == user1) & df['business_id'].isin(df[df['user_id'] == user2]['business_id'])]
+    df_user2 = df[(df['user_id'] == user2) & df['business_id'].isin(df[df['user_id'] == user1]['business_id'])]
+
+    if df_user1.empty or df_user2.empty:
+        return 0.0  # Não há avaliações em comum
+
+    avg_rating_diff = (df_user1['stars'] - df_user2['stars']).mean()
+    return avg_rating_diff
+
+def Weight_v1(user1_id, user2_id, users_df, df):
+    user_1 = users_df[users_df['user_id'] == user1_id]
+    friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
+
+    return EliteUsers_v1(user_1) + (user_1['fans'] / 100) + Friends_v1(user2_id, friends) + BusinessesReviewedCommom_v1(user1_id, user2_id, df)
