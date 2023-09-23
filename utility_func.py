@@ -323,3 +323,44 @@ def perform_tsne(svd_matrix, n_componets, n_iter):
     res_embedding = tsne.fit_transform(svd_matrix)
     projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
     return projection
+
+
+def EliteUsers(user1):
+    
+    value = len(list(user1['elite'])[0].split(','))
+
+    return min(value, 5)
+
+
+def Friends(user, user_list):
+    if user in user_list:
+        return 1
+    else:
+        return 0
+    
+
+def BusinessesReviewedCommom(user1, user2, df):
+
+    # Filter the DataFrame to include only reviews by user1 and user2
+    df_filtered = df[df['user_id'].isin([user1, user2])]
+
+    # Count the unique businesses reviewed by the selected users
+    value = df_filtered.groupby('business_id').filter(lambda x: x['user_id'].nunique() == 2)['business_id'].nunique()
+
+    return value
+
+
+def SameReviewRating(user1, user2, df):
+
+    rating1 = df[df['user_id'] == user1].stars
+    rating2 = df[df['user_id'] == user2].stars
+
+    return rating1 == rating2
+
+
+def Weight(user1_id, user2_id, users_df, df):
+
+    user_1 = users_df[users_df['user_id'] == user1_id]
+    friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
+
+    return EliteUsers(user_1) + (user_1['fans'] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, df)
