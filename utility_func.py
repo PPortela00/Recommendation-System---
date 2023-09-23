@@ -344,21 +344,25 @@ def perform_tsne(svd_matrix, n_componets, n_iter):
     projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
     return projection
 
-
+"""This function takes information about a user (user1) and calculates their 'elite' status. 
+It assumes that the user's elite status is represented as a comma-separated string in the 'elite' column of the DataFrame. 
+It counts the number of elements in the 'elite' string and returns the minimum of that count and 5."""
 def EliteUsers(user1):
     
     value = len(list(user1['elite'])[0].split(','))
 
     return min(value, 5)
 
-
+"""This function checks if a given user ID (user) is present in a list of friends (user_list).
+ If the user is in the list, it returns 1 (indicating a friendship connection); otherwise, it returns 0."""
 def Friends(user, user_list):
     if user in user_list:
         return 1
     else:
         return 0
     
-
+"""This function counts the number of businesses that have been reviewed by both user1 and user2 in the given DataFrame df. 
+It filters the DataFrame to include only reviews by these two users, then counts the unique businesses they have reviewed together."""""
 def BusinessesReviewedCommom(user1, user2, df):
 
     # Filter the DataFrame to include only reviews by user1 and user2
@@ -369,7 +373,8 @@ def BusinessesReviewedCommom(user1, user2, df):
 
     return value
 
-
+"""This function checks if user1 and user2 have given the same review rating for any businesses in the DataFrame df. 
+It does this by comparing the star ratings given by these users for the businesses they have reviewed."""
 def SameReviewRating(user1, user2, df):
 
     rating1 = df[df['user_id'] == user1].stars
@@ -377,7 +382,11 @@ def SameReviewRating(user1, user2, df):
 
     return rating1 == rating2
 
-
+"""This is the main function that calculates the weight of the connection between user1_id and user2_id. It combines the results from the other functions:
+It calculates the "elite" status of user1_id using the EliteUsers function.
+It adds a contribution based on the number of fans of user1_id divided by 100.
+It checks if user2_id is in the list of friends of user1_id using the Friends function.
+It counts the number of businesses reviewed in common by both users using the BusinessesReviewedCommom function."""
 def Weight(user1_id, user2_id, users_df, df):
 
     user_1 = users_df[users_df['user_id'] == user1_id]
