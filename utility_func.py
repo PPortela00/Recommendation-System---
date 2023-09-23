@@ -122,6 +122,26 @@ def Top10CommomCategoriesTucson(business_tucson_df):
     plt.ylabel('Category')
     plt.show()
 
+def Top10CategoriesByReviewsTucson(business_tucson_df, reviews_tucson_df):
+    # Primeiro, mesclamos as tabelas com base no campo 'business_id'
+    merged_df = pd.merge(business_tucson_df, reviews_tucson_df, on='business_id', how='inner')
+
+    # Em seguida, criamos uma lista de todas as categorias em que cada revisão está envolvida
+    all_categories = merged_df['categories'].str.split(',').explode().str.strip()
+
+    # Calculamos o total de reviews para cada categoria
+    category_review_counts = all_categories.value_counts()
+
+    # Selecionamos as 10 principais categorias com base no total de reviews
+    top_10_categories = category_review_counts.head(10)
+
+    # Plotamos o gráfico de barras
+    plt.figure(figsize=(12, 8))
+    sns.barplot(y=top_10_categories.index, x=top_10_categories.values)
+    plt.title('Top 10 Business Categories in Tucson by Reviews')
+    plt.xlabel('Number of Reviews')
+    plt.ylabel('Category')
+    plt.show()
 
 def UserRegistrationReviewsTucson(users_df, reviews_tucson_df):
     # 4. Analysis of User Registration Dates related to reviews in Tucson:
