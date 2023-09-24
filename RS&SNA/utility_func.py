@@ -248,6 +248,8 @@ def Weight(user1_id, user2_id, users_df, df):
 
     return EliteUsers(user_1) + (user_1['fans'] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, df)
 
+
+
 """An alternative to calculating a user's 'elite' status could be to consider the duration of elite status.
 Instead of counting the number of comma-separated elements in the 'elite' column, you could calculate the number of years the user has held elite status."""
 def EliteUsers_v1(user1):
