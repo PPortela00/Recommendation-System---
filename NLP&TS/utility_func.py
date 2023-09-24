@@ -3,8 +3,11 @@ import numpy as np
 import surprise
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 from sklearn.manifold import TSNE
 from IPython.display import display
+from lightfm import LightFM
+from lightfm.data import Dataset
 
 
 def YelpDatasets(business_df, reviews_df, users_df):
@@ -240,6 +243,26 @@ def PrepareDataSurprise(df, sample_size=326439):
     return trainset, testset
 
 
+def PrepareDataLightFM(full_dataset, trainset, testset):
+    # Extract all rows from the Trainset
+    rows = [(trainset.to_raw_uid(uid), trainset.to_raw_iid(iid), rating) for (uid, iid, rating) in trainset.all_ratings()]
+
+    # Create a pandas DataFrame from the extracted rows
+    train = pd.DataFrame(rows, columns=['user_id', 'business_id', 'stars']) 
+    test = pd.DataFrame(testset, columns=['user_id', 'business_id', 'stars'])
+
+    train_dataset = Dataset()
+    train_dataset.fit(full_dataset.user_id,full_dataset.business_id)
+
+    (train_interactions, train_weights) = train_dataset.build_interactions([(x['user_id'],
+                                                                             x['business_id'],
+                                                                             x['stars']) for index,x in train.iterrows()])
+    
+    train = (train_interactions, train_weights)
+    
+    return train, test
+
+
 # Define evaluation function
 def evaluate_algorithm(algo, trainset, testset):
     algo.fit(trainset)
@@ -284,6 +307,39 @@ def SingularValueDecompositionPP(data_train, data_test, n_factors=100, n_epochs=
     svdpp_rmse, predictions = evaluate_algorithm(svdpp_algo, data_train, data_test)
 
     return svdpp_algo, svdpp_rmse, predictions
+
+
+def RMSE(y_true, y_pred):
+    # Calculate the squared differences between the two arrays
+    squared_diff = (y_true - y_pred) ** 2
+
+    # Calculate the mean of squared differences
+    mean_squared_diff = squared_diff.mean()
+
+    # Calculate the RMSE by taking the square root of the mean squared difference
+    rmse = np.sqrt(mean_squared_diff)
+
+    return rmse
+
+
+def MatrixFactorizationLightFM(train, test, n_components=10, learning_schedule='adagrad', learning_rate=0.05, loss_func='warp', epochs=20):
+    model = LightFM(no_components=n_components, 
+                    learning_schedule=learning_schedule, 
+                    learning_rate=learning_rate,
+                    loss=loss_func)
+    
+    model.fit(interactions=train[0], user_features=None, item_features=None, sample_weight=train[1], epochs=epochs)
+
+    test_user_ids = np.array(test['user_id'])
+    test_item_ids = np.array(test['business_id'])
+
+    y_hat = model.predict(test_user_ids, test_item_ids)
+    y_true = np.array(test['stars'])
+
+    rmse = RMSE(y_true, y_hat)
+    print(f"RMSE: {rmse:.4f}")
+
+    return model, rmse, y_hat
 
 
 def PredictionsRS(trainset, predictions, n):
