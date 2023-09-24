@@ -253,12 +253,13 @@ def perform_tsne(svd_matrix, n_componets, n_iter):
     projection = pd.DataFrame(columns=['x', 'y'], data=res_embedding)
     return projection
 
+
 """This function takes information about a user (user1) and calculates their 'elite' status. 
 It assumes that the user's elite status is represented as a comma-separated string in the 'elite' column of the DataFrame. 
 It counts the number of elements in the 'elite' string and returns the minimum of that count and 5."""
 def EliteUsers(user1):
     
-    value = len(list(user1['elite'])[0].split(','))
+    value = len(user1[4].split(','))
 
     return min(value, 5)
 
@@ -272,13 +273,18 @@ def Friends(user, user_list):
     
 """This function counts the number of businesses that have been reviewed by both user1 and user2 in the given DataFrame df. 
 It filters the DataFrame to include only reviews by these two users, then counts the unique businesses they have reviewed together."""""
-def BusinessesReviewedCommom(user1, user2, df):
+def BusinessesReviewedCommom(user1, user2, sna_numpy):
 
-    # Filter the DataFrame to include only reviews by user1 and user2
-    df_filtered = df[df['user_id'].isin([user1, user2])]
+    user_mask = np.logical_or(sna_numpy[:, 0] == user1, sna_numpy[:, 0] == user2)
+    filtered_array = sna_numpy[user_mask]
 
-    # Count the unique businesses reviewed by the selected users
-    value = df_filtered.groupby('business_id').filter(lambda x: x['user_id'].nunique() == 2)['business_id'].nunique()
+    # Extract the 'business_id' column from the filtered array
+    business_ids = filtered_array[:, 1]
+
+    # Get the unique values and their counts
+    unique_values, counts = np.unique(business_ids, return_counts=True)
+
+    value = np.sum(counts == 2)
 
     return value
 
@@ -297,12 +303,12 @@ It calculates the "elite" status of user1_id using the EliteUsers function.
 It adds a contribution based on the number of fans of user1_id divided by 100.
 It checks if user2_id is in the list of friends of user1_id using the Friends function.
 It counts the number of businesses reviewed in common by both users using the BusinessesReviewedCommom function."""
-def Weight(user1_id, user2_id, users_df, df):
+def Weight(user1_id, user2_id, sna_numpy):
 
-    user_1 = users_df[users_df['user_id'] == user1_id]
-    friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
+    user_1 = sna_numpy[sna_numpy[:, 0] == 'LpZfJekvMo5S61UBAmuyHw'][0]
+    friends = user_1[2].split(', ')
 
-    return EliteUsers(user_1) + (user_1['fans'] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, df)
+    return EliteUsers(user_1) + (user_1[3] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, sna_numpy)
 
 
 
