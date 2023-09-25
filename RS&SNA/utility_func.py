@@ -305,7 +305,7 @@ It checks if user2_id is in the list of friends of user1_id using the Friends fu
 It counts the number of businesses reviewed in common by both users using the BusinessesReviewedCommom function."""
 def Weight(user1_id, user2_id, sna_numpy):
 
-    user_1 = sna_numpy[sna_numpy[:, 0] == 'LpZfJekvMo5S61UBAmuyHw'][0]
+    user_1 = sna_numpy[sna_numpy[:, 0] == user1_id][0]
     friends = user_1[2].split(', ')
 
     return EliteUsers(user_1) + (user_1[3] / 100) + Friends(user2_id, friends) + BusinessesReviewedCommom(user1_id, user2_id, sna_numpy)
@@ -343,3 +343,24 @@ def Weight_v1(user1_id, user2_id, users_df, df):
     friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
 
     return EliteUsers_v1(user_1) + (user_1['fans'] / 100) + Friends_v1(user2_id, friends) + BusinessesReviewedCommom_v1(user1_id, user2_id, df)
+
+
+def Weight_v2(user1_ids, user2_ids, sna_numpy):
+    weights = []
+
+    # Create a dictionary to map user IDs to their friends for efficient access
+    friends_dict = {}
+    for row in sna_numpy:
+        user_id, friends_str = row[0], row[2]
+        friends = friends_str.split(', ')
+        friends_dict[user_id] = friends
+
+    # Iterate through combinations of user1 IDs and user2 IDs
+    for user1_id, user2_id in zip(user1_ids, user2_ids):
+        user1_data = sna_numpy[sna_numpy[:, 0] == user1_id][0]
+        user2_friends = friends_dict.get(user2_id, [])
+
+        weight = EliteUsers(user1_data) + (user1_data[3] / 100) + Friends(user2_id, user2_friends) + BusinessesReviewedCommom(user1_id, user2_id, sna_numpy)
+        weights.append(weight)
+
+    return np.array(weights)
