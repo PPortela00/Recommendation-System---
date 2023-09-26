@@ -8,6 +8,7 @@ from sklearn.manifold import TSNE
 from IPython.display import display
 from lightfm import LightFM
 from lightfm.data import Dataset
+from itertools import combinations
 
 
 def YelpDatasets(business_df, reviews_df, users_df):
@@ -84,7 +85,6 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filt
     return df
 
 
-
 def PrepareDataSurprise(df, sample_size=326439):
     # Create a Surprise Reader specifying the rating scale
     reader = surprise.Reader(rating_scale=(df.stars.min(), df.stars.max()))
@@ -114,6 +114,33 @@ def PrepareDataLightFM(full_dataset, trainset, testset):
     train = (train_interactions, train_weights)
     
     return train, test
+
+
+def ComputeCombinations(df_sna, n_combinations):
+    # Calculate weights and add edges efficiently
+    unique_users = df_sna['user_id'].unique()
+    user_combinations = np.array(list(combinations(unique_users, 2)))
+    np.random.shuffle(user_combinations)
+
+    user_combinations = user_combinations[:n_combinations]
+
+    return user_combinations
+
+
+def PrepareDataSNA(combinations, np_sna):
+    user1_ids, user2_ids = combinations[:, 0], combinations[:, 1]
+
+    # Create a dictionary to map unique user IDs to their positions in sna_np
+    user_id_to_index = {}
+    for index, user_id in enumerate(np_sna[:, 0]):
+        if user_id not in user_id_to_index:
+            user_id_to_index[user_id] = index
+
+    # Map user IDs to their positions
+    user1_indexes = np.array([user_id_to_index[user_id] for user_id in user1_ids])
+    users1 = np_sna[user1_indexes]
+
+    return users1, user2_ids
 
 
 # Define evaluation function
@@ -303,7 +330,7 @@ It calculates the "elite" status of user1_id using the EliteUsers function.
 It adds a contribution based on the number of fans of user1_id divided by 100.
 It checks if user2_id is in the list of friends of user1_id using the Friends function.
 It counts the number of businesses reviewed in common by both users using the BusinessesReviewedCommom function."""
-def Weight(user1_id, user2_id, sna_numpy):
+def Weight_v1(user1_id, user2_id, sna_numpy):
 
     user_1 = sna_numpy[sna_numpy[:, 0] == user1_id][0]
     friends = user_1[2].split(', ')
@@ -338,29 +365,35 @@ def BusinessesReviewedCommom_v1(user1, user2, df):
     avg_rating_diff = (df_user1['stars'] - df_user2['stars']).mean()
     return avg_rating_diff
 
-def Weight_v1(user1_id, user2_id, users_df, df):
+def Weight_v2(user1_id, user2_id, users_df, df):
     user_1 = users_df[users_df['user_id'] == user1_id]
     friends = user_1.reset_index().drop(columns=['index'])['friends'][0].split(', ')
 
     return EliteUsers_v1(user_1) + (user_1['fans'] / 100) + Friends_v1(user2_id, friends) + BusinessesReviewedCommom_v1(user1_id, user2_id, df)
 
 
-def Weight_v2(user1_ids, user2_ids, sna_numpy):
-    weights = []
+def Weight(users_1, users_2):
+    def EliteUsers(users_1):
+    
+        values = np.array([len(elite.split(',')) for elite in users_1[:, 4]])
 
-    # Create a dictionary to map user IDs to their friends for efficient access
-    friends_dict = {}
-    for row in sna_numpy:
-        user_id, friends_str = row[0], row[2]
-        friends = friends_str.split(', ')
-        friends_dict[user_id] = friends
+        return np.minimum(values, 5)
+    
 
-    # Iterate through combinations of user1 IDs and user2 IDs
-    for user1_id, user2_id in zip(user1_ids, user2_ids):
-        user1_data = sna_numpy[sna_numpy[:, 0] == user1_id][0]
-        user2_friends = friends_dict.get(user2_id, [])
+    def FansCount(users_1):
 
-        weight = EliteUsers(user1_data) + (user1_data[3] / 100) + Friends(user2_id, user2_friends) + BusinessesReviewedCommom(user1_id, user2_id, sna_numpy)
-        weights.append(weight)
+        return users_1[:, 3] / 100
 
-    return np.array(weights)
+
+    def Friends(users_1, users_2_ids):
+        def Friend(users_2, user_list):
+            return np.max(np.where(np.isin(user_list, users_2), 1, 0))
+
+        # Compute friends for all users
+        friends_array = np.array(list(friends.split(', ') for friends in users_1[:, 2]), dtype=object)
+        all_friends = np.array(list(Friend(user2, friends1) for user2, friends1 in zip(users_2_ids, friends_array)))
+
+        return all_friends
+    
+
+    return EliteUsers(users_1) + FansCount(users_1) + Friends(users_1, users_2)
