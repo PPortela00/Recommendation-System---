@@ -381,8 +381,13 @@ def Weight(users_1, users_2):
     
 
     def FansCount(users_1):
-
-        return users_1[:, 3] / 100
+        fans_column = users_1[:, 3]
+    
+        # Substitua valores vazios (strings vazias) por zero
+        fans_column = np.where(fans_column == '', '0', fans_column)
+        
+        fans_column_numeric = fans_column.astype(float)  # Converte a coluna para float
+        return fans_column_numeric / 100
 
 
     def Friends(users_1, users_2_ids):
