@@ -127,6 +127,39 @@ def ComputeCombinations(df_sna, n_combinations):
     return user_combinations
 
 
+def ComputeConnectionsUsers(np_sna):
+    # Assuming sna_np is your numpy array
+    user_ids = np_sna[:, 0]  # Assuming user IDs are in the first column
+    friends_column = np_sna[:, 2]  # Assuming the friends column is at index 2
+
+    # Split the friends column into individual friend lists
+    friend_lists = [friends.split(', ') for friends in friends_column]
+
+    # Create a dictionary to map user IDs to their corresponding friend lists
+    user_friends_dict = {user_id: friend_list for user_id, friend_list in zip(user_ids, friend_lists)}
+
+    # Convert the friends lists in user_friends_dict to NumPy arrays
+    user_friends_dict_np = {user_id: np.array(friends) for user_id, friends in user_friends_dict.items()}
+
+    # Filter the friends arrays using broadcasting
+    filtered_user_friends_dict_np = {
+        user_id: friends[np.isin(friends, user_ids)]
+        for user_id, friends in user_friends_dict_np.items()
+    }
+
+    # Extract user IDs and their corresponding friends' lists from the filtered dictionary
+    user_ids = np.array(list(filtered_user_friends_dict_np.keys()))
+    friends_lists = np.array(list(filtered_user_friends_dict_np.values()))
+
+    # Create an array of pairs (user_id, friend_id) using broadcasting
+    user_friend_pairs = np.column_stack((
+        np.repeat(user_ids, [len(friends) for friends in friends_lists]),
+        np.concatenate(friends_lists)
+    ))
+
+    return user_friend_pairs
+
+
 def PrepareDataSNA(combinations, np_sna):
     user1_ids, user2_ids = combinations[:, 0], combinations[:, 1]
 
