@@ -63,6 +63,3 @@ def LoadReviews():
     # Return the loaded reviews DataFrame
     return reviews_df
 
-# Exemplo de uso para carregar apenas as avaliações (reviews)
-reviews_df = LoadReviews()
-
