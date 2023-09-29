@@ -54,25 +54,30 @@ def ConvertStringKeyToIntegerKey(df, col):
     # Add a new column with integer keys
     df[col] = df[col].map(string_to_int_mapping)
 
-    return df
+    return df, string_to_int_mapping
 
 
-def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filter):
+def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filter, categories_to_filter):
     # Aggregation of data, with relevant columns, from the business and reviews datasets
-    business_cols = ['business_id', 'city', 'is_open']
+    business_cols = ['business_id', 'city', 'is_open', 'categories']
     reviews_cols = ['review_id', 'user_id', 'business_id', 'stars']
     users_cols = ['user_id']
 
     # Merge the relevant dataframes
     df = pd.merge(reviews_df[reviews_cols], business_df[(business_df['is_open'] == 1) & (business_df['city'] == city)][business_cols], 
                   left_on='business_id', right_on='business_id', how='inner')
+    
+    # Filtrar por categoria "Sandwich"
+    category = categories_to_filter
+    df = df[df['categories'].str.contains(category, case=False, na=False)]
+
     df = pd.merge(df, users_df[users_cols], left_on='user_id', right_on='user_id', how='left')
     df = df[['user_id', 'business_id', 'stars']]
 
     df = df[~df['business_id'].isin(business_to_filter)]
 
-    df = ConvertStringKeyToIntegerKey(df, 'user_id')
-    df = ConvertStringKeyToIntegerKey(df, 'business_id')
+    df, user_mapping = ConvertStringKeyToIntegerKey(df, 'user_id')
+    df, business_mapping = ConvertStringKeyToIntegerKey(df, 'business_id')
 
     # Remove businesses with a number of reviews equal to or less than 1
     business_review_counts = df['business_id'].value_counts()
@@ -82,10 +87,10 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filt
     # Remove duplicate entries
     df = df.drop_duplicates(subset=['user_id', 'business_id'], keep="first", inplace=False)
     
-    return df
+    return df, user_mapping
 
 
-def PrepareDataSurprise(df, sample_size=326439):
+def PrepareDataSurprise(df, sample_size=29158):
     # Create a Surprise Reader specifying the rating scale
     reader = surprise.Reader(rating_scale=(df.stars.min(), df.stars.max()))
     # Load the pandas DataFrame into a Surprise Dataset
@@ -96,24 +101,33 @@ def PrepareDataSurprise(df, sample_size=326439):
     return trainset, testset
 
 
-def PrepareDataLightFM(full_dataset, trainset, testset):
+def PrepareDataLightFM(full_dataset, trainset, testset, user_features_df, user_id_mapping):
     # Extract all rows from the Trainset
     rows = [(trainset.to_raw_uid(uid), trainset.to_raw_iid(iid), rating) for (uid, iid, rating) in trainset.all_ratings()]
 
     # Create a pandas DataFrame from the extracted rows
-    train = pd.DataFrame(rows, columns=['user_id', 'business_id', 'stars']) 
+    train = pd.DataFrame(rows, columns=['user_id', 'business_id', 'stars'])
     test = pd.DataFrame(testset, columns=['user_id', 'business_id', 'stars'])
+    user_features_df['user_id'] = user_features_df['user_id'].map(user_id_mapping)
 
     train_dataset = Dataset()
-    train_dataset.fit(full_dataset.user_id,full_dataset.business_id)
+    train_dataset.fit(full_dataset.user_id, full_dataset.business_id)
+    train_dataset.fit_partial(users=full_dataset.user_id, items=full_dataset.business_id, user_features=user_features_df.columns[1:])
 
-    (train_interactions, train_weights) = train_dataset.build_interactions([(x['user_id'],
-                                                                             x['business_id'],
-                                                                             x['stars']) for index,x in train.iterrows()])
-    
-    train = (train_interactions, train_weights)
-    
-    return train, test
+    # Build the interaction matrix and weights matrix
+    (train_interactions, train_weights) = train_dataset.build_interactions(
+        [(x['user_id'], x['business_id'], x['stars']) for index, x in train.iterrows()]
+    )
+
+    # Build user features from user_features_df
+    user_features = train_dataset.build_user_features(
+        [(row['user_id'], ['community', 'degree_centrality', 'betweenness_centrality', 'closeness_centrality', 'cluster_kmeans', 'cluster_dbscan']) for index, row in user_features_df.iterrows()]
+    )
+
+    # Combine interactions, weights, and user features into a tuple
+    train_data = (train_interactions, train_weights, user_features)
+
+    return train_data, test
 
 
 def ComputeCombinations(df_sna, n_combinations):
@@ -241,7 +255,7 @@ def MatrixFactorizationLightFM(train, test, n_components=10, learning_schedule='
                     learning_rate=learning_rate,
                     loss=loss_func)
     
-    model.fit(interactions=train[0], user_features=None, item_features=None, sample_weight=train[1], epochs=epochs)
+    model.fit(interactions=train[0], user_features=train[2], item_features=None, sample_weight=train[1], epochs=epochs)
 
     test_user_ids = np.array(test['user_id'])
     test_item_ids = np.array(test['business_id'])
