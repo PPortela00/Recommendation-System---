@@ -36,5 +36,33 @@ def LoadJSON():
     # Return the loaded DataFrames as a tuple
     return business, reviews, users
 
+def LoadReviews():
+    # Define a nested function to read JSON data in chunks
+    def read_chunks(file, cols, chunk_size=500000):
+        # Obtenha o diretório atual do script
+        current_directory = os.path.dirname(os.path.realpath(__file__))
 
+        # Construa o caminho completo para o arquivo JSON
+        json_file_path = os.path.join(current_directory, 'yelp_dataset', f'yelp_academic_dataset_{file}.json')
+
+        # Use json_file_path como caminho para ler o arquivo JSON
+        df = pd.read_json(json_file_path, chunksize=chunk_size, lines=True)
+
+        # Create a list of DataFrames, each containing specified columns
+        chunk_list = [chunk[cols] for chunk in df]
+
+        # Concatenate the list of DataFrames into one
+        return pd.concat(chunk_list, ignore_index=True, join='outer', axis=0)
+    
+    # Define column list for reviews
+    review_cols = ['review_id','user_id','business_id','stars','useful','funny','cool','text','date']
+
+    # Load review data into a DataFrame using the read_chunks function
+    reviews_df = read_chunks('review', review_cols)
+
+    # Return the loaded reviews DataFrame
+    return reviews_df
+
+# Exemplo de uso para carregar apenas as avaliações (reviews)
+reviews_df = LoadReviews()
 
