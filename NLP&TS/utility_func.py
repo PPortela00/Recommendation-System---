@@ -1,4 +1,4 @@
-import en_core_web_smYelpDatasets_Reviews
+import en_core_web_sm
 import pandas as pd
 import matplotlib.pyplot as plt
 
