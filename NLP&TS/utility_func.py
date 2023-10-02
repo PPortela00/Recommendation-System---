@@ -1,4 +1,4 @@
-import en_core_web_sm
+import en_core_web_smYelpDatasets_Reviews
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -6,7 +6,7 @@ from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
 
 
-def YelpDatasets_Revies(reviews_df):
+def YelpDatasets_Reviews(reviews_df):
 
     # Display information and the first 5 rows of the 'reviews' DataFrame
     print("\nReviews DataFrame's head:")
