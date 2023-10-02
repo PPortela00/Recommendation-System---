@@ -54,11 +54,19 @@ def LoadReviews():
         # Concatenate the list of DataFrames into one
         return pd.concat(chunk_list, ignore_index=True, join='outer', axis=0)
     
-    # Define column list for reviews
+    # Define column list for reviews and business
+    business_cols = ['business_id', 'name', 'address', 'city', 'state', 'postal_code', 'latitude', 'longitude', 'stars', 'review_count', 'is_open', 'attributes', 'categories', 'hours']
     review_cols = ['review_id','user_id','business_id','stars','useful','funny','cool','text','date']
 
     # Load review data into a DataFrame using the read_chunks function
+    business = read_chunks('business', business_cols)
     reviews_df = read_chunks('review', review_cols)
+
+    # Filter businesses in Tucson with is_open equal to 1
+    business_Tucson_Open = business[(business['city'] == 'Tucson') & (business['is_open'] == 1)]
+
+    # Now, let's select only the reviews that correspond to the filtered businesses
+    reviews_df = reviews_df[reviews_df['business_id'].isin(business_Tucson_Open['business_id'])]
 
     # Return the loaded reviews DataFrame
     return reviews_df
