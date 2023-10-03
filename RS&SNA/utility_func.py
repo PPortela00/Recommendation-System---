@@ -38,6 +38,12 @@ def NumReviewsBusiness(df_reviews):
     # Set the x-axis limits to zoom in
     plt.xlim(left=0, right=100)  # Adjust the range as needed
 
+    # Remove grids
+    plt.grid(False)
+
+    # Set background color to white
+    plt.gca().set_facecolor('white')
+
     # Show the histogram
     plt.show()
 
