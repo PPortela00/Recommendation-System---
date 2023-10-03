@@ -1,7 +1,6 @@
 import en_core_web_sm
 import pandas as pd
 import matplotlib.pyplot as plt
-
 from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
 
@@ -60,3 +59,27 @@ def check_stationarity(ts):
     plt.title('Time Series')
     plt.legend()
     plt.show()
+
+def group_rows_by_model(data):
+    grouped_data = {}
+    header = data[0]
+    added_metric_header = False
+    
+    for row in data[2:]:
+        model_name = row[0].split(" (")[0] # Extract the model name without the parenthesis
+        if model_name not in grouped_data:
+            grouped_data[model_name] = [row]
+        else:
+            grouped_data[model_name].append(row)
+    
+    # Convert the group dictionary into a list of lists
+    grouped_data_list = [header]
+    for model_name, rows in grouped_data.items():
+        if not added_metric_header:
+            grouped_data_list.append(["", "Precision", "Recall", "F1-Score", "Support"])
+            added_metric_header = True
+        else:
+            grouped_data_list.append(["", "", "", "", ""]) # Add a blank line as separation
+        grouped_data_list.extend(rows)
+    
+    return grouped_data_list
