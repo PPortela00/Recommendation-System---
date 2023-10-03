@@ -1,6 +1,7 @@
 import en_core_web_sm
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
 from statsmodels.tsa.holtwinters import ExponentialSmoothing, Holt, SimpleExpSmoothing
@@ -60,6 +61,81 @@ def check_stationarity(ts):
     plt.title('Time Series')
     plt.legend()
     plt.show()
+
+
+def plot_top_businesses_over_time(df, top_businesses_series):
+    """
+    Plot the time series of review counts for the top businesses over the years.
+
+    Parameters:
+    - df: DataFrame with columns 'business_id', 'date', 'count', and 'year'.
+    - top_businesses_series: Pandas Series with the top businesses and their review counts.
+    """
+    # Convert the Series to a DataFrame
+    top_businesses_df = top_businesses_series.reset_index()
+
+    # Filter the DataFrame to include only the top businesses
+    top_businesses_df = df[df['business_id'].isin(top_businesses_df['business_id'])]
+
+    # Plotting
+    plt.figure(figsize=(14, 8))
+    sns.set_palette("viridis")  # You can choose a different color palette if needed
+
+    for business_id in top_businesses_df['business_id'].unique():
+        business_data = top_businesses_df[top_businesses_df['business_id'] == business_id]
+        sns.lineplot(x='date', y='count', data=business_data, label=f'Business {business_id}')
+
+    plt.title('Time Series of Review Counts for Top Businesses Over the Years', fontsize=16)
+    plt.xlabel('Date', fontsize=14)
+    plt.ylabel('Review Counts', fontsize=14)
+    plt.legend()
+    
+    # Set y-axis limits to start from 0
+    plt.ylim(bottom=0)
+    
+    # Add grid for better readability
+    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    # Add a legend outside the plot
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    
+    # Tight layout for better spacing
+    plt.tight_layout()
+    
+    plt.show()
+
+
+def SeasonalPlot(df, years_to_show=[]):
+    df_1 = df.copy()
+
+    if len(years_to_show) != 0:
+        # Filter the DataFrame to include only the desired years
+        df_1 = df_1[df_1['year'].isin(years_to_show)]
+
+    # Pivot the filtered DataFrame to have years as columns and months as the index
+    pivot_df = df_1.pivot(index='month', columns='year', values='count')
+
+    # Create a seasonal plot
+    plt.figure(figsize=(12, 6))
+    plt.title('Seasonal Plot')
+    plt.xlabel('Month')
+    plt.ylabel('Value')
+
+    # Plot each year's data as a separate line
+    for year in pivot_df.columns:
+        plt.plot(pivot_df.index, pivot_df[year], label=str(year))
+
+    # Add legend
+    plt.legend(loc='best')
+
+    # Customize x-axis ticks (e.g., month names)
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    plt.xticks(pivot_df.index, month_names)
+
+    # Show the plot
+    plt.grid(True)
+    plt.show()
+
 
 def group_rows_by_model(data):
     grouped_data = {}
