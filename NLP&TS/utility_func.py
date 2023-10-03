@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
+from statsmodels.tsa.holtwinters import ExponentialSmoothing, Holt, SimpleExpSmoothing
 
 
 def YelpDatasets_Reviews(reviews_df):
@@ -83,3 +84,30 @@ def group_rows_by_model(data):
         grouped_data_list.extend(rows)
     
     return grouped_data_list
+
+
+def ExponentialSmoothingModeling(model_type, sentiment_data, alpha=0.9, beta=0.9, gamma=0.9, decomposition_type='additive', damped=False):
+
+    if model_type == 'simple':
+        model = SimpleExpSmoothing(endog = sentiment_data['review_id'])
+        results = model.fit(smoothing_level = alpha)
+
+    elif model_type == 'holt':
+        model = Holt(endog = sentiment_data['review_id'], 
+                     damped_trend = damped)
+
+        results = model.fit(smoothing_level = alpha,
+                            smoothing_trend = beta)
+        
+    else:
+        model = ExponentialSmoothing(endog = sentiment_data['review_id'], 
+                                     trend = decomposition_type, 
+                                     seasonal = decomposition_type, 
+                                     seasonal_periods = 12, 
+                                     damped_trend = damped)
+
+        results = model.fit(smoothing_level = alpha, 
+                            smoothing_trend = beta, 
+                            smoothing_seasonal = gamma)
+        
+    return model, results
