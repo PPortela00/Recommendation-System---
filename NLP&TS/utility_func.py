@@ -1,5 +1,6 @@
 import en_core_web_sm
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
@@ -12,6 +13,27 @@ def YelpDatasets_Reviews(reviews_df):
     # Display information and the first 5 rows of the 'reviews' DataFrame
     print("\nReviews DataFrame's head:")
     display(reviews_df.head())
+
+
+def PrepareDataRegression(df):
+
+    df_reg = df.copy()
+
+    df_reg['month'] = df_reg['date'].dt.month
+    df_reg['quarter'] = df_reg['date'].dt.quarter
+
+    df_reg['yearly_sine'] = np.sin(2 * np.pi * df_reg['month'] / 12)
+    df_reg['yearly_cosine'] = np.cos(2 * np.pi * df_reg['month'] / 12)
+
+    lags = 12
+    for i in range(1, lags + 1):
+        df_reg[f'lag_{i}'] = df_reg['review_id'].shift(i)
+
+    df_reg = df_reg.iloc[lags:]
+
+    df_reg.drop(columns=['date'], inplace=True)
+
+    return df_reg
 
 
 def process_text(text):
