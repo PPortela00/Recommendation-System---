@@ -31,8 +31,6 @@ def PrepareDataRegression(df, n_lag_features):
 
     df_reg = df_reg.iloc[lags:]
 
-    df_reg.drop(columns=['date'], inplace=True)
-
     return df_reg
 
 
