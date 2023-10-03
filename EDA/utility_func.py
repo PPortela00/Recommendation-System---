@@ -70,17 +70,47 @@ def DescribeCities(merged_df, cities):
 
 def ScatterPlotEDA(top5_var_cities_df):
 
-    plt.figure(figsize=(10, 6))
-    colors = np.arange(len(top5_var_cities_df))
-    plt.scatter(top5_var_cities_df['city'], top5_var_cities_df['star_var'], c=colors, cmap='viridis', s=100)
-    plt.xlabel('City')
-    plt.ylabel('Review Variance')
-    plt.title('Top 5 Cities with Highest Review Variance (with more than 300k reviews)')
-    plt.xticks(rotation=45)
-    colorbar = plt.colorbar()
-    colorbar.set_label('Cities')
+    # Create a separate figure and axes for greater customization
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Create a color palette based on star_var values
+    colors = top5_var_cities_df['star_var']
+
+    # Create custom sizes based on the number of revisions (count)
+    sizes = top5_var_cities_df['count'] / 1000 # Adjust the size to a suitable scale
+
+    # Plot scatter points with custom colors and sizes
+    scatter = ax.scatter(
+        top5_var_cities_df['city'],
+        top5_var_cities_df['star_var'],
+        c=colors,
+        cmap='viridis',
+        s=sizes,
+        alpha=0.7
+    )
+
+    # Customize labels and title
+    ax.set_xlabel('City')
+    ax.set_ylabel('Review Variance')
+    ax.set_title('Top 5 Cities with Highest Review Variance (with more than 300k reviews)')
+
+    # Rotation of x-axis labels for better readability
+    plt.xticks(rotation=45, ha='right')
+
+    # Add a color bar
+    colorbar = plt.colorbar(scatter)
+    colorbar.set_label('Star Variance')
+
+    # Set a white background and remove grids
+    ax.set_facecolor('white')
+    ax.grid(False)
+
+    # Adjust the appearance of the chart
     plt.tight_layout()
+
+    # Display the graph
     plt.show()
+
 
 
 # This function plots an histogram of the review's ratings
