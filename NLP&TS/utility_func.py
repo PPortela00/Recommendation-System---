@@ -15,7 +15,7 @@ def YelpDatasets_Reviews(reviews_df):
     display(reviews_df.head())
 
 
-def PrepareDataRegression(df):
+def PrepareDataRegression(df, n_lag_features):
 
     df_reg = df.copy()
 
@@ -25,7 +25,7 @@ def PrepareDataRegression(df):
     df_reg['yearly_sine'] = np.sin(2 * np.pi * df_reg['month'] / 12)
     df_reg['yearly_cosine'] = np.cos(2 * np.pi * df_reg['month'] / 12)
 
-    lags = 12
+    lags = n_lag_features
     for i in range(1, lags + 1):
         df_reg[f'lag_{i}'] = df_reg['review_id'].shift(i)
 
