@@ -3,9 +3,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
 from statsmodels.tsa.holtwinters import ExponentialSmoothing, Holt, SimpleExpSmoothing
+from sklearn.metrics import mean_squared_error
 
 
 def YelpDatasets_Reviews(reviews_df):
@@ -207,3 +209,49 @@ def ExponentialSmoothingModeling(model_type, sentiment_data, alpha=0.9, beta=0.9
                             smoothing_seasonal = gamma)
         
     return model, results
+
+
+def EvaluateBaseline(baseline_value, y_true):
+
+    y_hat = np.array([baseline_value] * len(y_true))
+    rmse_mean_pos = mean_squared_error(y_true, y_hat, squared = False)
+
+    print(f'RMSE: {rmse_mean_pos:.2f}')
+
+    return y_hat
+
+
+def EvaluateETS(model, y_true):
+
+    y_hat = np.array(model.forecast(13))
+
+    rmse_mean = mean_squared_error(y_true, y_hat, squared = False)
+
+    print(f'RMSE: {rmse_mean:.2f}')
+
+    return y_hat
+
+
+def EvaluateRegression(model, X_test, y_true):
+
+    y_hat = model.predict(X_test)
+
+    rmse_mean = mean_squared_error(y_true, y_hat, squared = False)
+
+    print(f'RMSE: {rmse_mean:.2f}')
+
+    return y_hat
+
+
+def PlotPredictions(date, y_true, y_hat, title, xlabel='Dates', ylabel='Number of reviews'):
+    plt.figure(figsize=(15, 4), dpi=300)
+    
+    # Plot sentiment
+    plt.plot(date, y_true, label='True', color='tab:green')
+    plt.plot(date, y_hat, label='Predicted', color='tab:red')
+        
+    plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
+        
+    # Display legend
+    plt.legend()
+    plt.show()
