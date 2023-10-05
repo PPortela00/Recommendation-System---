@@ -7,7 +7,7 @@ import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
 from IPython.display import display
 from statsmodels.tsa.holtwinters import ExponentialSmoothing, Holt, SimpleExpSmoothing
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
 
 def YelpDatasets_Reviews(reviews_df):
@@ -214,9 +214,13 @@ def ExponentialSmoothingModeling(model_type, sentiment_data, alpha=0.9, beta=0.9
 def EvaluateBaseline(baseline_value, y_true):
 
     y_hat = np.array([baseline_value] * len(y_true))
-    rmse_mean_pos = mean_squared_error(y_true, y_hat, squared = False)
+    rmse = mean_squared_error(y_true, y_hat, squared = False)
+    mae = mean_absolute_error(y_true, y_hat)
+    mape = mean_absolute_percentage_error(y_true, y_hat)
 
-    print(f'RMSE: {rmse_mean_pos:.2f}')
+    print(f'RMSE: {rmse:.2f}')
+    print(f'MAE: {mae:.2f}')
+    print(f'MAPE: {mape:.2f}')
 
     return y_hat
 
@@ -225,9 +229,13 @@ def EvaluateETS(model, y_true):
 
     y_hat = np.array(model.forecast(13))
 
-    rmse_mean = mean_squared_error(y_true, y_hat, squared = False)
+    rmse = mean_squared_error(y_true, y_hat, squared = False)
+    mae = mean_absolute_error(y_true, y_hat)
+    mape = mean_absolute_percentage_error(y_true, y_hat)
 
-    print(f'RMSE: {rmse_mean:.2f}')
+    print(f'RMSE: {rmse:.2f}')
+    print(f'MAE: {mae:.2f}')
+    print(f'MAPE: {mape:.2f}')
 
     return y_hat
 
@@ -236,9 +244,13 @@ def EvaluateRegression(model, X_test, y_true):
 
     y_hat = model.predict(X_test)
 
-    rmse_mean = mean_squared_error(y_true, y_hat, squared = False)
+    rmse = mean_squared_error(y_true, y_hat, squared = False)
+    mae = mean_absolute_error(y_true, y_hat)
+    mape = mean_absolute_percentage_error(y_true, y_hat)
 
-    print(f'RMSE: {rmse_mean:.2f}')
+    print(f'RMSE: {rmse:.2f}')
+    print(f'MAE: {mae:.2f}')
+    print(f'MAPE: {mape:.2f}')
 
     return y_hat
 
