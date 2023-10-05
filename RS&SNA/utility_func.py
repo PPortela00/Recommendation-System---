@@ -63,7 +63,7 @@ def ConvertStringKeyToIntegerKey(df, col):
     return df, string_to_int_mapping
 
 
-def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filter, categories_to_filter):
+def PrepareDataFrameRS(business_df, reviews_df, users_df, city, categories_to_filter):
     # Aggregation of data, with relevant columns, from the business and reviews datasets
     business_cols = ['business_id', 'city', 'is_open', 'categories']
     reviews_cols = ['review_id', 'user_id', 'business_id', 'stars']
@@ -79,8 +79,6 @@ def PrepareDataFrameRS(business_df, reviews_df, users_df, city, business_to_filt
 
     df = pd.merge(df, users_df[users_cols], left_on='user_id', right_on='user_id', how='left')
     df = df[['user_id', 'business_id', 'stars']]
-
-    df = df[~df['business_id'].isin(business_to_filter)]
 
     df, user_mapping = ConvertStringKeyToIntegerKey(df, 'user_id')
     df, business_mapping = ConvertStringKeyToIntegerKey(df, 'business_id')
