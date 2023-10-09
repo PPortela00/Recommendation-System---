@@ -72,8 +72,9 @@ def ScatterPlotEDA(top5_var_cities_df):
     # Create a separate figure and axes for greater customization
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    # Create a color palette based on star_var values
-    colors = top5_var_cities_df['star_var']
+    # Create a color palette based on the 'count' values (scaled down by 1000)
+    scaled_count = top5_var_cities_df['count'] / 1000
+    colors = scaled_count
 
     # Create custom sizes based on the number of revisions (count)
     sizes = top5_var_cities_df['count'] / 1000  # Ajuste o fator de escala para 1000 para tornar os pontos maiores
@@ -89,16 +90,16 @@ def ScatterPlotEDA(top5_var_cities_df):
     )
 
     # Customize labels and title
-    ax.set_xlabel('City')
-    ax.set_ylabel('Review Variance')
-    ax.set_title('Top 5 Cities with Highest Review Variance (with more than 300k reviews)')
+    ax.set_xlabel('City', weight='bold')
+    ax.set_ylabel('Review Variance', weight='bold')
+    ax.set_title('Top 5 Cities with Highest Review Variance (with more than 300k reviews)', weight='bold')
 
     # Rotation of x-axis labels for better readability
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45, ha='right', weight='bold')
 
     # Add a color bar with the label adjusted to show values without scaling
     colorbar = plt.colorbar(scatter)
-    colorbar.set_label('Total Reviews (in thousands)')  # Mantenha a label para refletir milhares
+    colorbar.set_label('Number of Reviews (in Thousands)', weight='bold')
 
     # Adjust the appearance of the chart
     ax.set_facecolor('white')
