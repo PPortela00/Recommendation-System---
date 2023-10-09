@@ -7,5 +7,5 @@ Our project explores the integration of social network data into collaborative f
 ### Sentiment Analysis Over Time
 In this aspect of our project, we delve into Natural Language Processing (NLP) techniques combined with time series analysis. Our objective is to implement sentiment analysis on reviews and track how sentiment evolves over time. By predicting sentiment and monitoring its changes, we can gain valuable insights into user opinions and preferences, which can inform business decisions and strategies.
 
-# Structure to be followed
-## shared_utilities -> the folder "yelp_dataset" should be added inside of the folder "shared_utilitites", containing the 3 jsons files, because the data is read from that location
+## Structure to be followed
+### shared_utilities -> the folder "yelp_dataset" should be added inside of the folder "shared_utilitites", containing the 3 jsons files, because the data is read from that location
