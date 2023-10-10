@@ -105,14 +105,13 @@ def PrepareDataSurprise(df, sample_size=29158):
     return trainset, testset
 
 
-def PrepareDataLightFM(full_dataset, trainset, testset, user_features_df, user_id_mapping):
+def PrepareDataLightFM(full_dataset, trainset, testset, user_features_df):
     # Extract all rows from the Trainset
     rows = [(trainset.to_raw_uid(uid), trainset.to_raw_iid(iid), rating) for (uid, iid, rating) in trainset.all_ratings()]
 
     # Create a pandas DataFrame from the extracted rows
     train = pd.DataFrame(rows, columns=['user_id', 'business_id', 'stars'])
     test = pd.DataFrame(testset, columns=['user_id', 'business_id', 'stars'])
-    user_features_df['user_id'] = user_features_df['user_id'].map(user_id_mapping)
 
     train_dataset = Dataset()
     train_dataset.fit(full_dataset.user_id, full_dataset.business_id)
@@ -125,7 +124,7 @@ def PrepareDataLightFM(full_dataset, trainset, testset, user_features_df, user_i
 
     # Build user features from user_features_df
     user_features = train_dataset.build_user_features(
-        [(row['user_id'], ['community', 'degree_centrality', 'betweenness_centrality', 'closeness_centrality', 'cluster_kmeans', 'cluster_dbscan']) for index, row in user_features_df.iterrows()]
+        [(row['user_id'], ['community_id', 'betweenness', 'closeness']) for index, row in user_features_df.iterrows()]
     )
 
     # Combine interactions, weights, and user features into a tuple
